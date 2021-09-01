@@ -1,0 +1,54 @@
+#!/usr/bin/env python3
+#	dspbptk - Dyson Sphere Program Blueprint Toolkit
+#	Copyright (C) 2021-2021 Johannes Bauer
+#
+#	This file is part of dspbptk.
+#
+#	dspbptk is free software; you can redistribute it and/or modify
+#	it under the terms of the GNU General Public License as published by
+#	the Free Software Foundation; this program is ONLY licensed under
+#	version 3 of the License, later versions are explicitly excluded.
+#
+#	dspbptk is distributed in the hope that it will be useful,
+#	but WITHOUT ANY WARRANTY; without even the implied warranty of
+#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#	GNU General Public License for more details.
+#
+#	You should have received a copy of the GNU General Public License
+#	along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+#	Johannes Bauer <JohannesBauer@gmx.de>
+
+import sys
+from MultiCommand import MultiCommand
+from ActionJSON import ActionJSON
+from ActionDump import ActionDump
+from ActionEdit import ActionEdit
+
+mc = MultiCommand()
+
+def genparser(parser):
+	parser.add_argument("-f", "--force", action = "store_true", help = "Overwrite output file if it exists.")
+	parser.add_argument("-p", "--pretty-print", action = "store_true", help = "Create a pretty-printed output JSON file.")
+	parser.add_argument("--ignore-corrupt", action = "store_true", help = "Do not validate the checksum when reading the blueprint file.")
+	parser.add_argument("--verbose", action = "store_true", help = "Increase verbosity during the importing process.")
+	parser.add_argument("infile", help = "Input blueprint text file")
+	parser.add_argument("outfile", help = "Output JSON file")
+mc.register("json", "Convert a blueprint to JSON", genparser, action = ActionJSON)
+
+def genparser(parser):
+	parser.add_argument("--ignore-corrupt", action = "store_true", help = "Do not validate the checksum when reading the blueprint file.")
+	parser.add_argument("--verbose", action = "store_true", help = "Increase verbosity during the importing process.")
+	parser.add_argument("infile", help = "Input blueprint text file")
+mc.register("dump", "Dump some information about a blueprint", genparser, action = ActionDump)
+
+def genparser(parser):
+	parser.add_argument("-f", "--force", action = "store_true", help = "Overwrite output file if it exists.")
+	parser.add_argument("--short-desc", metavar = "description", help = "Set short description to this value.")
+	parser.add_argument("--ignore-corrupt", action = "store_true", help = "Do not validate the checksum when reading the blueprint file.")
+	parser.add_argument("--verbose", action = "store_true", help = "Increase verbosity during the importing process.")
+	parser.add_argument("infile", help = "Input blueprint text file")
+	parser.add_argument("outfile", help = "Output blueprint text file")
+mc.register("edit", "Edit a blueprint", genparser, action = ActionEdit)
+
+mc.run(sys.argv[1:])
