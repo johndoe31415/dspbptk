@@ -144,3 +144,7 @@ class DysonSphereItem(enum.IntEnum):
 	InformationMatrix = 6004
 	GravityMatrix = 6005
 	UniverseMatrix = 6006
+
+class LogisticsStationDirection(enum.IntEnum):
+	Output = 1
+	Input = 2
