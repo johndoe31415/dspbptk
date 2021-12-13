@@ -20,6 +20,7 @@
 
 import os
 import json
+import sys
 from BaseAction import BaseAction
 from Blueprint import Blueprint
 
@@ -32,9 +33,9 @@ class ActionJSON(BaseAction):
 		bp = Blueprint.read_from_file(self._args.infile, validate_hash = not self._args.ignore_corrupt)
 		bp_dict = bp.to_dict()
 
-		with open(self._args.outfile, "w") as f:
-			if self._args.pretty_print:
-				json.dump(bp_dict, f, indent = 4, sort_keys = True)
-				f.write("\n")
-			else:
-				json.dump(bp_dict, f)
+		f = open(self._args.outfile, "w") if self._args.outfile != '-' else sys.stdout
+		if self._args.pretty_print:
+			json.dump(bp_dict, f, indent = 4, sort_keys = True)
+			f.write("\n")
+		else:
+			json.dump(bp_dict, f)
