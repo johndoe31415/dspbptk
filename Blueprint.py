@@ -27,7 +27,7 @@ from Tools import DateTimeTools
 from BlueprintData import BlueprintData
 
 class Blueprint():
-	def __init__(self, game_version, data, layout = 10, icon0 = 0, icon1 = 0, icon2 = 0, icon3 = 0, icon4 = 0, timestamp = None, short_desc = "Short description"):
+	def __init__(self, game_version, data, layout = 10, icon0 = 0, icon1 = 0, icon2 = 0, icon3 = 0, icon4 = 0, timestamp = None, short_desc = "Short description", desc = ""):
 		if timestamp is None:
 			timestamp = DateTimeTools.csharp_now()
 		self._layout = layout
@@ -39,6 +39,7 @@ class Blueprint():
 		self._timestamp = timestamp
 		self._game_version = game_version
 		self._short_desc = short_desc
+		self._desc = desc
 		self._data = data
 
 	@property
@@ -60,36 +61,46 @@ class Blueprint():
 		self._short_desc = value
 
 	@property
+	def desc(self):
+		return self._desc
+
+	@desc.setter
+	def desc(self, value):
+		assert(isinstance(value, str))
+		self._desc = value
+
+	@property
 	def decoded_data(self):
 		return BlueprintData.deserialize(self._data)
 
 	@classmethod
 	def from_blueprint_string(cls, bp_string, validate_hash = True):
+		index = bp_string.rindex("\"")
+		hashed_data = bp_string[:index]
 		if validate_hash:
-			index = bp_string.rindex("\"")
-			hashed_data = bp_string[:index]
 			ref_value = bp_string[index + 1 : ].lower().strip()
 			hash_value = DysonSphereMD5(DysonSphereMD5.Variant.MD5F).update(hashed_data.encode("utf-8")).hexdigest()
 			if ref_value != hash_value:
-				raise InvalidHashValueException("Blueprint string has invalid has value.")
+				raise InvalidHashValueException("Blueprint string has invalid hash value.")
+
+		[meta, b64data] = hashed_data.split('"')
 
 		assert(bp_string.startswith("BLUEPRINT:"))
-		components = bp_string[10:].split(",")
+		components = meta.replace("BLUEPRINT:", "").split(",")
 
 		assert(len(components) == 12)
-		(fixed0_1, layout, icon0, icon1, icon2, icon3, icon4, fixed0_2, timestamp, game_version, short_desc, b64data_hash) = components
+		(fixed0_1, layout, icon0, icon1, icon2, icon3, icon4, fixed0_2, timestamp, game_version, short_desc, desc) = components
 
 		(fixed0_1, layout, icon0, icon1, icon2, icon3, icon4, fixed0_2, timestamp) = (int(fixed0_1), int(layout), int(icon0), int(icon1), int(icon2), int(icon3), int(icon4), int(fixed0_2), int(timestamp))
 		assert(fixed0_1 == 0)
 		assert(fixed0_2 == 0)
 		timestamp = DateTimeTools.csharp_to_datetime(timestamp)
 		short_desc = urllib.parse.unquote(short_desc)
+		desc = urllib.parse.unquote(desc)
 
-		assert(b64data_hash.startswith("\""))
-		(b64data, hashval) = b64data_hash[1:].split("\"")
 		compressed_data = base64.b64decode(b64data)
 		data = gzip.decompress(compressed_data)
-		return cls(layout = layout, icon0 = icon0, icon1 = icon1, icon2 = icon2, icon3 = icon3, icon4 = icon4, timestamp = timestamp, game_version = game_version, short_desc = short_desc, data = data)
+		return cls(layout = layout, icon0 = icon0, icon1 = icon1, icon2 = icon2, icon3 = icon3, icon4 = icon4, timestamp = timestamp, game_version = game_version, short_desc = short_desc, desc = desc, data = data)
 
 	def serialize(self):
 		compressed_data = gzip.compress(self._data)
@@ -106,9 +117,10 @@ class Blueprint():
 		components.append("0")
 		components.append(str(DateTimeTools.datetime_to_csharp(self._timestamp)))
 		components.append(self._game_version)
-		components.append(urllib.parse.quote(self._short_desc))
+		components.append(urllib.parse.quote(self._short_desc, safe=""))
+		components.append(urllib.parse.quote(self._desc, safe=""))
 		header = "BLUEPRINT:" + ",".join(components)
-		hashed_data = header + ",\"" + b64_data
+		hashed_data = header + "\"" + b64_data
 		hash_value = DysonSphereMD5(DysonSphereMD5.Variant.MD5F).update(hashed_data.encode("utf-8")).hexdigest()
 		return hashed_data + "\"" + hash_value.upper()
 
@@ -121,6 +133,7 @@ class Blueprint():
 			"timestamp": self._timestamp.strftime("%Y-%m-%d %H:%M:%S"),
 			"game_version": self._game_version,
 			"short_desc": self._short_desc,
+			"desc": self._desc,
 			"data": self.decoded_data.to_dict(),
 		}
 
@@ -132,3 +145,14 @@ class Blueprint():
 	def write_to_file(self, filename):
 		with open(filename, "w") as f:
 			f.write(self.serialize())
+
+	def replace_item(self, search, replace):
+		from Enums import DysonSphereItem
+		data = self.decoded_data
+		replacement_count = 0
+		for i, building in enumerate(data.buildings):
+			if building.data.item_id == search:
+				data.buildings[i]._fields = data.buildings[i]._fields._replace(item_id = replace)
+				replacement_count += 1
+		self._data = BlueprintData.serialize(data)
+		print(f"{replacement_count} instances of {DysonSphereItem(search).name} replaced with {DysonSphereItem(replace).name}")

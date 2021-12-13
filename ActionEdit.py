@@ -31,4 +31,8 @@ class ActionEdit(BaseAction):
 		bp = Blueprint.read_from_file(self._args.infile, validate_hash = not self._args.ignore_corrupt)
 		if self._args.short_desc is not None:
 			bp.short_desc = self._args.short_desc
+
+		if self._args.search_item_id is not None and self._args.replacement_item_id is not None:
+			bp.replace_item(self._args.search_item_id, self._args.replacement_item_id)
+
 		bp.write_to_file(self._args.outfile)
