@@ -145,3 +145,14 @@ class Blueprint():
 	def write_to_file(self, filename):
 		with open(filename, "w") as f:
 			f.write(self.serialize())
+
+	def replace_item(self, search, replace):
+		from Enums import DysonSphereItem
+		data = self.decoded_data
+		replacement_count = 0
+		for i, building in enumerate(data.buildings):
+			if building.data.item_id == search:
+				data.buildings[i]._fields = data.buildings[i]._fields._replace(item_id = replace)
+				replacement_count += 1
+		self._data = BlueprintData.serialize(data)
+		print(f"{replacement_count} instances of {DysonSphereItem(search).name} replaced with {DysonSphereItem(replace).name}")

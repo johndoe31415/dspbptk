@@ -247,3 +247,14 @@ class BlueprintData():
 			buildings.append(building)
 
 		return cls(header, areas, buildings)
+
+	@classmethod
+	def serialize(cls, data):
+		bp = cls._HEADER.pack(data._header._asdict())
+		for area in data._areas:
+			bp += BlueprintArea._BLUEPRINT_AREA.pack(area.to_dict())
+		bp += cls._BUILDING_HEADER.pack({"building_count": len(data._buildings)})
+		for building in data._buildings:
+			bp += BlueprintBuilding._BLUEPRINT_BUILDING.pack(building.data._asdict())
+			bp += b''.join([i.to_bytes(4, byteorder = 'little') for i in building.raw_parameters])
+		return bp
