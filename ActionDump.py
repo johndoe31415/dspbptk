@@ -1,5 +1,5 @@
 #	dspbptk - Dyson Sphere Program Blueprint Toolkit
-#	Copyright (C) 2021-2021 Johannes Bauer
+#	Copyright (C) 2021-2022 Johannes Bauer
 #
 #	This file is part of dspbptk.
 #
@@ -26,15 +26,25 @@ from Enums import DysonSphereItem
 
 class ActionDump(BaseAction):
 	def run(self):
-		bp = Blueprint.read_from_file(self._args.infile, validate_hash = not self._args.ignore_corrupt)
-		bpd = bp.decoded_data
+		for filename in self._args.infile:
+			if len(self._args.infile) > 1:
+				print(f"{filename}:")
+			bp = Blueprint.read_from_file(filename, validate_hash = not self._args.ignore_corrupt)
+			bpd = bp.decoded_data
 
-		building_counter = collections.Counter()
-		for building in bpd.buildings:
-			building_counter[building.data.item_id] += 1
+			building_counter = collections.Counter()
+			for building in bpd.buildings:
+				building_counter[building.data.item_id] += 1
 
-		print("Name: %s" % (bp.short_desc))
-		print("Total building count: %d" % (len(bpd.buildings)))
-		for (item_id, count) in building_counter.most_common():
-			item = DysonSphereItem(item_id)
-			print("%5d  %s" % (count, item.name))
+			if bp.short_desc != "":
+				print("Text          : %s" % (bp.short_desc))
+			if bp.long_desc != "":
+				print("Description   : %s" % (bp.long_desc))
+			if self._args.verbose >= 1:
+				print("Game version  : %s" % (bp.game_version))
+			print("Building count: %d" % (len(bpd.buildings)))
+			for (item_id, count) in building_counter.most_common():
+				item = DysonSphereItem(item_id)
+				print("%5d  %s" % (count, item.name))
+			if len(self._args.infile) > 1:
+				print()

@@ -52,6 +52,10 @@ class Blueprint():
 		self._timestamp = value
 
 	@property
+	def game_version(self):
+		return self._game_version
+
+	@property
 	def short_desc(self):
 		return self._short_desc
 
