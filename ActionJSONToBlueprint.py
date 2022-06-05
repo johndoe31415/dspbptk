@@ -1,5 +1,5 @@
 #	dspbptk - Dyson Sphere Program Blueprint Toolkit
-#	Copyright (C) 2021-2021 Johannes Bauer
+#	Copyright (C) 2021-2022 Johannes Bauer
 #
 #	This file is part of dspbptk.
 #
@@ -23,18 +23,22 @@ import json
 from BaseAction import BaseAction
 from Blueprint import Blueprint
 
-class ActionJSON(BaseAction):
+class ActionJSONToBlueprint(BaseAction):
 	def run(self):
 		if (not self._args.force) and os.path.exists(self._args.outfile):
 			print("Refusing to overwrite: %s" % (self._args.outfile))
 			return 1
 
-		bp = Blueprint.read_from_file(self._args.infile, validate_hash = not self._args.ignore_corrupt)
-		bp_dict = bp.to_dict()
+		with open(self._args.infile) as f:
+			bp_dict = json.load(f)
+		print(bp_dict)
 
-		with open(self._args.outfile, "w") as f:
-			if self._args.pretty_print:
-				json.dump(bp_dict, f, indent = 4, sort_keys = True)
-				f.write("\n")
-			else:
-				json.dump(bp_dict, f)
+#		bp = Blueprint.read_from_file(self._args.infile, validate_hash = not self._args.ignore_corrupt)
+#		bp_dict = bp.to_dict()
+#
+#		with open(self._args.outfile, "w") as f:
+#			if self._args.pretty_print:
+#				json.dump(bp_dict, f, indent = 4, sort_keys = True)
+#				f.write("\n")
+#			else:
+#				json.dump(bp_dict, f)
