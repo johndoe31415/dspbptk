@@ -44,7 +44,11 @@ class ActionDump(BaseAction):
 				print("Game version  : %s" % (bp.game_version))
 			print("Building count: %d" % (len(bpd.buildings)))
 			for (item_id, count) in building_counter.most_common():
-				item = DysonSphereItem(item_id)
-				print("%5d  %s" % (count, item.name))
+				try:
+					item = DysonSphereItem(item_id)
+					item_name = item.name
+				except ValueError:
+					item_name = f"[{item_id}]"
+				print("%5d  %s" % (count, item_name))
 			if len(self._args.infile) > 1:
 				print()
