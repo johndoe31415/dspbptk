@@ -1,5 +1,5 @@
 #	dspbptk - Dyson Sphere Program Blueprint Toolkit
-#	Copyright (C) 2021-2021 Johannes Bauer
+#	Copyright (C) 2021-2022 Johannes Bauer
 #
 #	This file is part of dspbptk.
 #
@@ -27,7 +27,7 @@ from Tools import DateTimeTools
 from BlueprintData import BlueprintData
 
 class Blueprint():
-	def __init__(self, game_version, data, layout = 10, icon0 = 0, icon1 = 0, icon2 = 0, icon3 = 0, icon4 = 0, timestamp = None, short_desc = "Short description"):
+	def __init__(self, game_version, data, layout = 10, icon0 = 0, icon1 = 0, icon2 = 0, icon3 = 0, icon4 = 0, timestamp = None, short_desc = "Short description", long_desc = "Long description"):
 		if timestamp is None:
 			timestamp = DateTimeTools.csharp_now()
 		self._layout = layout
@@ -39,6 +39,7 @@ class Blueprint():
 		self._timestamp = timestamp
 		self._game_version = game_version
 		self._short_desc = short_desc
+		self._long_desc = long_desc
 		self._data = data
 
 	@property
@@ -58,6 +59,15 @@ class Blueprint():
 	def short_desc(self, value):
 		assert(isinstance(value, str))
 		self._short_desc = value
+
+	@property
+	def long_desc(self):
+		return self._long_desc
+
+	@long_desc.setter
+	def long_desc(self, value):
+		assert(isinstance(value, str))
+		self._long_desc = value
 
 	@property
 	def decoded_data(self):
@@ -85,11 +95,14 @@ class Blueprint():
 		timestamp = DateTimeTools.csharp_to_datetime(timestamp)
 		short_desc = urllib.parse.unquote(short_desc)
 
-		assert(b64data_hash.startswith("\""))
-		(b64data, hashval) = b64data_hash[1:].split("\"")
+		b64data_hash_split = b64data_hash.split("\"")
+		assert(len(b64data_hash_split) == 3)
+
+		(long_desc, b64data, hash_value) = b64data_hash_split
+		long_desc = urllib.parse.unquote(long_desc)
 		compressed_data = base64.b64decode(b64data)
 		data = gzip.decompress(compressed_data)
-		return cls(layout = layout, icon0 = icon0, icon1 = icon1, icon2 = icon2, icon3 = icon3, icon4 = icon4, timestamp = timestamp, game_version = game_version, short_desc = short_desc, data = data)
+		return cls(layout = layout, icon0 = icon0, icon1 = icon1, icon2 = icon2, icon3 = icon3, icon4 = icon4, timestamp = timestamp, game_version = game_version, short_desc = short_desc, long_desc = long_desc, data = data)
 
 	def serialize(self):
 		compressed_data = gzip.compress(self._data)
